@@ -1,1 +1,1 @@
-Python script to detect if user is smiling
+Python script to detect if the user is smiling
