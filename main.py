@@ -1,12 +1,13 @@
 import cv2
 import mediapipe as mp
 import numpy as np
+import keyboard
  
 # Inicjalizacja MediaPipe Face Mesh
 mp_face_mesh = mp.solutions.face_mesh
 face_mesh = mp_face_mesh.FaceMesh(static_image_mode=False, max_num_faces=1, min_detection_confidence=0.5, min_tracking_confidence=0.5)
 mp_drawing = mp.solutions.drawing_utils
- 
+draw_landmarks = False 
 smile_description = {
     (1.7, 1.83) : 'Subtle smile',
     (1.83, 1.94) : 'Medium smile',
@@ -14,6 +15,7 @@ smile_description = {
     (2.1, 5.0) : 'Huge smile'
     
 }
+
 
 def get_smile_description(smile_ratio) :
     for(min_ratio, max_ratio ), description in smile_description.items():
@@ -39,11 +41,18 @@ while cap.isOpened():
  
     # Wykryj twarze
     results = face_mesh.process(rgb_frame)
- 
+
     if results.multi_face_landmarks:
         for face_landmarks in results.multi_face_landmarks:
             # Rysowanie punktów charakterystycznych twarzy
-            
+            if draw_landmarks :
+                mp_drawing.draw_landmarks(
+                    image=frame,
+                    landmark_list=face_landmarks,
+                    connections=mp_face_mesh.FACEMESH_TESSELATION,
+                    landmark_drawing_spec=mp_drawing.DrawingSpec(color=(0,0,255), thickness=1, circle_radius=1),
+                    connection_drawing_spec=mp_drawing.DrawingSpec(color=(0,255,0), thickness=1, circle_radius=1)
+                )
  
             # Indeksy punktów charakterystycznych ust
             top_lip = [61, 40, 37, 0, 267, 270, 269, 409, 291]
@@ -68,9 +77,10 @@ while cap.isOpened():
             # Wykrywanie uśmiechu na podstawie stosunku odległości
             smile_ratio = horizontal_distance / nose_distance
             print(smile_ratio)
-            
+            if keyboard.is_pressed('z') :
+                draw_landmarks = not draw_landmarks
             cv2.putText(frame, get_smile_description(smile_ratio) + ' detected', (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
- 
+            cv2.putText(frame, 'Toggle mesh - z', (350, 450), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
     # Pokaż wynik
     cv2.imshow('Face Mesh', frame)
  
